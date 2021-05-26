@@ -16,6 +16,7 @@
 	console.log("Rezzy content script injected.");
 
 	let rezzy_active = false;
+	let options = {};
 
 	function find_next_prev_links() {
 		// WET: logic should match spider.js
@@ -115,7 +116,11 @@
 			[...Object.values(jobs_by_url)]
 			.map(({url, scaling_factor, priority})=> ({url, scaling_factor, priority}));
 		socket.emit("jobs", jobs);
-		socket.emit("spider-from-url", location.href);
+		socket.emit("spider", {
+			starting_url: location.href,
+			crawl_backward_pages: options.crawl_backward_pages,
+			crawl_forward_pages: options.crawl_forward_pages
+		});
 	}
 
 	function get_priority(job) {
@@ -313,6 +318,9 @@
 			console.log("Rezzy inactive. Not enabled for origin", location.origin);
 		}
 	});
+	browser.storage.local.get(["crawl_forward_pages", "crawl_backward_pages"]).then((storedInfo) => {
+		Object.assign(options, storedInfo);
+	});
 	browser.storage.onChanged.addListener((changes)=> {
 		if (location.origin in changes) {
 			set_enabled(!!changes[location.origin].newValue);
@@ -320,6 +328,11 @@
 				console.log("Rezzy enabled for origin", location.origin);
 			} else {
 				console.log("Rezzy disabled for origin", location.origin);
+			}
+		}
+		for (const [key, { newValue }] of Object.entries(changes)) {
+			if (["crawl_forward_pages", "crawl_backward_pages"].includes(key)) {
+				options[key] = newValue;
 			}
 		}
 	});

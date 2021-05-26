@@ -1,6 +1,8 @@
 /* global browser, io */
 
 const toggle_site_button = document.getElementById("toggle-this-site");
+const crawl_forward_input = document.getElementById("crawl-forward-input");
+const crawl_backward_input = document.getElementById("crawl-backward-input");
 
 const socket = io("http://localhost:4284", {transports: ["websocket"]});
 
@@ -35,4 +37,23 @@ toggle_site_button.addEventListener("click", ()=> {
 	get_origin().then((origin)=> {
 		browser.storage.local.set({[origin]: !was_enabled});
 	});
+});
+
+browser.storage.local.get(["crawl_forward_pages", "crawl_backward_pages"]).then((storedInfo) => {
+	if ("crawl_forward_pages" in storedInfo) {
+		crawl_forward_input.value = storedInfo.crawl_forward_pages;
+	} else {
+		browser.storage.local.set({crawl_forward_pages: crawl_forward_input.value});
+	}
+	if ("crawl_backward_pages" in storedInfo) {
+		crawl_backward_input.value = storedInfo.crawl_backward_pages;
+	} else {
+		browser.storage.local.set({ crawl_backward_pages: crawl_backward_input.value });
+	}
+});
+crawl_forward_input.addEventListener("input", () => {
+	browser.storage.local.set({crawl_forward_pages: crawl_forward_input.value});
+});
+crawl_backward_input.addEventListener("input", () => {
+	browser.storage.local.set({crawl_backward_pages: crawl_backward_input.value});
 });
